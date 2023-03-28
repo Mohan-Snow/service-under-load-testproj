@@ -50,6 +50,12 @@ func MiningHandler(difficulty int, timeout time.Duration) http.HandlerFunc {
 			w.Write(res)
 			return
 
+		// Memory Leaks:
+		// time.After(timeout) - таймер, который находится под капотом этой функции, не собирается GC до тех пор пока
+		// время таймера не истечет. Если для производительности это важно, то лучше использовать вместо time.After(timeout)
+		// NewTimer и вызывать Timer.Stop, если отсчет времени больше не нужен.
+		// (как например в том случае, если горутина завершила свою работу)
+		// case <-time.After(timeout):
 		case <-timer.C:
 			// если таймер подошел к концу, закрываем канал done, чтобы сообщить горутине generateHash о прекращении работы
 			close(done)
